@@ -6,39 +6,134 @@ namespace Neoan3\Components;
 use Neoan3\Apps\Stateless;
 use Neoan3\Core\RouteException;
 use Neoan3\Frame\Neoan;
+use League\HTMLToMarkdown\HtmlConverter;
 
+/**
+ * Class DevTo
+ * @package Neoan3\Components
+ */
 class DevTo extends Neoan
 {
 
+    /**
+     * @var bool
+     */
+    private $markdown = false;
 
+    function getDevTo(){
+        $test = json_decode(file_get_contents(__DIR__ .'/test.json'),true);
+        $this->postDevTo($test);
+    }
+
+    /**
+     * @param array $body
+     *
+     * @throws RouteException
+     */
     function postDevTo(array $body)
     {
 
         // check token
         $jwt = Stateless::restrict();
         // get dev.to api key
-        try{
+        try {
             $credentials = getCredentials();
             $apiKey = $this->getApiKey($credentials);
 
-            // prepare content
-
-            switch ($body['event']){
-                case 'created': break;
-                case 'updated': break;
-                case 'deleted': break;
+            switch ($body['event']) {
+                case 'created':
+                case 'updated':
+                    // find existing
+                    $update = $this->investigateStoreObject($body['payload']['store']);
+                    $devBody = $this->transformPayload($body['payload']);
+                    break;
+                case 'deleted':
+                    break;
             }
-        } catch (\Exception $e){
-            throw new RouteException('Unable to execute dev.to plugin',500);
+        } catch (\Exception $e) {
+            throw new RouteException('Unable to execute dev.to plugin', 500);
         }
-        echo ['webhook' => 'received'];
+        return ['webhook' => 'received'];
     }
-    function getApiKey($credentials){
-        if(!isset($credentials['devToApiKey'])){
+
+    /**
+     * @param $credentials
+     *
+     * @return mixed
+     * @throws \Exception
+     */
+    private function getApiKey($credentials)
+    {
+        if (!isset($credentials['blua_devto']['api_key'])) {
             throw new \Exception('Key not set');
         }
-        return $credentials['devToApiKey'];
+        return $credentials['blua_devto']['api_key'];
     }
 
+    /**
+     * @param $payload
+     *
+     * @return array
+     */
+    private function transformPayload($payload)
+    {
+        $article = [
+            'title' => $payload['name'],
+            'tags' => explode(',', $payload['keywords']),
+            'canonical_url' => base . 'article/' . $payload['slug'] . '/',
+            'description' => $payload['teaser'],
+            'body_markdown' => $this->prepareContent($payload['content'])
+        ];
+        if (!empty($payload['publish_date'])) {
+            $article['published'] = true;
+        }
+        if ($payload['image_id']) {
+            $article['cover_image'] = base . $payload['image']['path'];
+        }
+
+        return $article;
+    }
+
+    /**
+     * @param $contentArray
+     *
+     * @return string
+     */
+    private function prepareContent($contentArray)
+    {
+        $content = '';
+        foreach ($contentArray as $contentPart) {
+            $content .= $this->convertContent($contentPart['content']);
+        }
+        return $content;
+    }
+
+    /**
+     * @param $content
+     *
+     * @return string
+     */
+    private function convertContent($content)
+    {
+        if (!$this->markdown) {
+            $this->markdown = new HtmlConverter(['strip_tags' => true]);
+        }
+        return $this->markdown->convert($content);
+    }
+
+    /**
+     * @param $store
+     *
+     * @return bool
+     */
+    private function investigateStoreObject($store)
+    {
+        foreach ($store as $possible) {
+            if ($possible['store_key'] === 'dev-to-id') {
+                return $possible['value'];
+            }
+        }
+        return false;
+    }
 
 }
