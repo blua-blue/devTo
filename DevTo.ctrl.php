@@ -112,17 +112,20 @@ class DevTo extends Neoan
      */
     private function transformPayload($payload)
     {
+        $isLocal = strpos(base,'localhost') !== false;
         $article = [
             'title' => $payload['name'],
             'tags' => explode(',', $payload['keywords']),
-            'canonical_url' => base . 'article/' . $payload['slug'] . '/',
             'description' => $payload['teaser'],
             'body_markdown' => $this->prepareContent($payload['content'])
         ];
+        if(!$isLocal){
+            $article['canonical_url'] = base . 'article/' . $payload['slug'] . '/';
+        }
         if (!empty($payload['publish_date'])) {
             $article['published'] = true;
         }
-        if ($payload['image_id']) {
+        if ($payload['image_id'] && !$isLocal) {
             $article['cover_image'] = base . $payload['image']['path'];
         }
 
