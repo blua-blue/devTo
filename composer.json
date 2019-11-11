@@ -1,0 +1,20 @@
+{
+    "name": "blua-blue/devTo",
+    "description": "blua.blue dev.to api plugin",
+    "minimum-stability": "dev",
+    "require": {
+        "mnsami/composer-custom-directory-installer": "1.1.*",
+        "neoan3-apps/stateless": "dev-master",
+        "neoan3-frame/neoan": "dev-master"
+    },
+    "license": "MIT",
+    "extra": {
+        "installer-paths": {
+            "./frame/{$name}": [
+                "neoan3-frame/neoan"
+            ],
+            "./model/{$name}": [],
+            "./component/{$name}": []
+        }
+    }
+}

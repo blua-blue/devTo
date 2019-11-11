@@ -1,0 +1,57 @@
+{
+  "event": "updated",
+  "payload": {
+    "id": "AEC51622F27411E9A642E86A6466D8E3",
+    "name": "test keywords",
+    "slug": "test-keywords",
+    "teaser": "Some keywords",
+    "image_id": "DF235811F6CD11E9A642E86A6466D8E3",
+    "author_user_id": "62BADDC0F26E11E9A642E86A6466D8E3",
+    "category_id": "37A9C6E38EB011E9A0F9E86A6466D8E3",
+    "is_public": 1,
+    "keywords": "dude,I cannot,belive this",
+    "publish_date": "2019-10-19 10:25:12",
+    "insert_date": "2019-10-24 22:19:14",
+    "update_date": null,
+    "delete_date": null,
+    "inserted": 1571969954000,
+    "image": {
+      "id": "DF235811F6CD11E9A642E86A6466D8E3",
+      "format": "image\/jpeg",
+      "path": "\/asset\/upload\/62BADDC0F26E11E9A642E86A6466D8E3\/db6035746b75c53dc71aa8.jpeg",
+      "inserter_user_id": "62BADDC0F26E11E9A642E86A6466D8E3",
+      "insert_date": "2019-10-24 22:19:10",
+      "delete_date": null
+    },
+    "rating": {
+      "total": 2,
+      "average": "4.5000"
+    },
+    "author": {
+      "id": "62BADDC0F26E11E9A642E86A6466D8E3",
+      "customer_id": null,
+      "user_type": "admin",
+      "user_name": "neoan",
+      "image_id": null,
+      "insert_date": "2019-10-20 15:11:57",
+      "delete_date": null
+    },
+    "comments": [],
+    "category": {
+      "id": "37A9C6E38EB011E9A0F9E86A6466D8E3",
+      "name": "Other",
+      "insert_date": "2019-06-14 10:25:06",
+      "delete_date": null
+    },
+    "content": [
+      {
+        "id": "AEC70711F27411E9A642E86A6466D8E3",
+        "article_id": "AEC51622F27411E9A642E86A6466D8E3",
+        "sort": 1,
+        "content": "<p>Hi there, edited4<\/p>",
+        "insert_date": "2019-10-19 09:30:45",
+        "delete_date": null
+      }
+    ]
+  }
+}
