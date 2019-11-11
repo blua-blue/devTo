@@ -78,7 +78,7 @@ class DevTo extends Neoan
         $header = [
             'User-Agent: neoan3',
             'Content-Type: application/json',
-            'api_key: ' . $this->apiKey
+            'api-key: ' . $this->apiKey
         ];
         $url = 'https://dev.to/api/articles' . ($existingId ? '/' . $existingId : '');
         $call = Curl::curling($url, json_encode(['article' => $payload]), $header, $existingId ? 'PUT' : 'POST');
