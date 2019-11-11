@@ -3,6 +3,8 @@
 
 namespace Neoan3\Components;
 
+use Neoan3\Apps\Curl;
+use Neoan3\Apps\Db;
 use Neoan3\Apps\Stateless;
 use Neoan3\Core\RouteException;
 use Neoan3\Frame\Neoan;
@@ -19,15 +21,18 @@ class DevTo extends Neoan
      * @var bool
      */
     private $markdown = false;
+    private $apiKey;
 
-    function getDevTo(){
-        $test = json_decode(file_get_contents(__DIR__ .'/test.json'),true);
+    function getDevTo()
+    {
+        $test = json_decode(file_get_contents(__DIR__ . '/test.json'), true);
         $this->postDevTo($test);
     }
 
     /**
      * @param array $body
      *
+     * @return array
      * @throws RouteException
      */
     function postDevTo(array $body)
@@ -38,7 +43,7 @@ class DevTo extends Neoan
         // get dev.to api key
         try {
             $credentials = getCredentials();
-            $apiKey = $this->getApiKey($credentials);
+            $this->apiKey = $this->getApiKey($credentials);
 
             switch ($body['event']) {
                 case 'created':
@@ -46,6 +51,7 @@ class DevTo extends Neoan
                     // find existing
                     $update = $this->investigateStoreObject($body['payload']['store']);
                     $devBody = $this->transformPayload($body['payload']);
+                    $this->sendToDevTo($devBody, $update);
                     break;
                 case 'deleted':
                     break;
@@ -54,6 +60,30 @@ class DevTo extends Neoan
             throw new RouteException('Unable to execute dev.to plugin', 500);
         }
         return ['webhook' => 'received'];
+    }
+
+    /**
+     * @param $payload
+     * @param $existingId
+     *
+     * @throws \Neoan3\Apps\DbException
+     */
+    private function sendToDevTo($payload, $existingId)
+    {
+        $header = [
+            'User-Agent: neoan3',
+            'Content-Type: application/json',
+            'api_key: ' . $this->apiKey
+        ];
+        $url = 'https://dev.to/api/articles' . ($existingId ? '/' . $existingId : '');
+        $call = Curl::curling($url, json_encode(['article' => $payload]), $header, $existingId ? 'PUT' : 'POST');
+        if (isset($call['id']) && !$existingId) {
+            Db::ask('article_store', [
+                'article_id' => $payload['id'],
+                'store_key' => 'dev-to-id',
+                'value' => $call['id']
+            ]);
+        }
     }
 
     /**
