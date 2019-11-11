@@ -17,3 +17,11 @@ From your blua.blue directory:
 This plugin will listen to update & create events (the dev.to api does currently not offer a deletion endpoint).
 
 This means that articles published through blua.blue will be published to dev.to as well. 
+
+### about localhost and links
+
+In some use cases or testing scenarios you may be running blua.blue from a local host.
+In such a case, the plugin will strip images and the canonical url from the payload.
+
+Please keep in mind that links in your content should be absolute in order to correctly work on external endpoints like dev.to
+
