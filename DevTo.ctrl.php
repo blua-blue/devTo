@@ -38,15 +38,17 @@ class DevTo extends Neoan
     function postDevTo(array $body)
     {
 
-        $jwt = Stateless::restrict();
+        // $jwt = Stateless::restrict();
+        // token-insecurity in blua.blue -> send JWT or encrypt?
+
+
         // get dev.to api key
         try {
             $credentials = getCredentials();
             // check token
-            if(!isset($_SERVER['HTTP_TOKEN']) || $_SERVER['HTTP_TOKEN'] !== $credentials['blua_devto']['token']){
+            if(!isset($_SERVER['HTTP_AUTHORIZATION']) || substr($_SERVER['HTTP_AUTHORIZATION'],7) !== $credentials['blua_devto']['token']){
                 return ['webhook' => 'denied'];
             }
-
 
             $this->apiKey = $this->getApiKey($credentials);
 
