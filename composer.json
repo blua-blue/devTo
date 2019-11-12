@@ -5,15 +5,12 @@
     "require": {
         "mnsami/composer-custom-directory-installer": "1.1.*",
         "neoan3-apps/stateless": "dev-master",
-        "league/html-to-markdown": "^4.10",
-        "neoan3-frame/neoan": "dev-master"
+        "league/html-to-markdown": "^4.10"
     },
     "license": "MIT",
     "extra": {
         "installer-paths": {
-            "./frame/{$name}": [
-                "neoan3-frame/neoan"
-            ],
+            "./frame/{$name}": [],
             "./model/{$name}": [],
             "./component/{$name}": []
         }
