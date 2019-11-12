@@ -86,7 +86,7 @@ class DevTo extends Neoan
         $call = Curl::curling($url, json_encode(['article' => $payload]), $header, $existingId ? 'PUT' : 'POST');
         if (isset($call['id']) && !$existingId) {
             Db::ask('article_store', [
-                'article_id' => $payload['id'],
+                'article_id' => '$' . $payload['id'],
                 'store_key' => 'dev-to-id',
                 'value' => $call['id']
             ]);
