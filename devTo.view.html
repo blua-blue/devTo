@@ -1,0 +1,29 @@
+<section class="section dev-to">
+    <h1 class="title">Setup dev.to plugin</h1>
+    <h2 class="subtitle">1. Create & get api key</h2>
+    <div class="content">
+        <p>
+            Visit <a href="https://dev.to/settings/account" target="_blank">your dev.to settings</a> and obtain an api key.
+        </p>
+    </div>
+
+    <h2 class="subtitle">2. Paste your api key in this form</h2>
+    <form action="post" id="dev-api-key-form" class="columns">
+        <div class="control-field column">
+            <input type="password" autocomplete="new-password" class="input" id="api-key"  placeholder="Dev.to API key">
+        </div>
+        <div class="column is-narrow">
+            <button class="button is-primary" type="submit">convert / test</button>
+        </div>
+    </form>
+    <h2 class="subtitle">3. Setup webhook</h2>
+    <div class="content">
+        <p>
+            Visit <a href="{{base}}profile/#api" target="_blank">{{base}}profile/#api</a> and register the webhook
+            <strong>{{base}}api.v1/dev-to</strong> with the token <strong id="webhook-token">NOT LOADED</strong>
+        </p>
+    </div>
+    <div class="content">
+        That's it
+    </div>
+</section>
