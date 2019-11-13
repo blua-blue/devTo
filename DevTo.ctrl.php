@@ -5,17 +5,30 @@ namespace Neoan3\Components;
 
 use Neoan3\Apps\Curl;
 use Neoan3\Apps\Db;
+use Neoan3\Apps\Ops;
 use Neoan3\Apps\Stateless;
 use Neoan3\Core\RouteException;
+use Neoan3\Core\Unicore;
 use Neoan3\Frame\Neoan;
 use League\HTMLToMarkdown\HtmlConverter;
 
 /**
  * Class DevTo
+ *
  * @package Neoan3\Components
  */
 class DevTo extends Neoan
 {
+    /**
+     * Setup
+     */
+    function init()
+    {
+        $uni = new Unicore();
+        $uni->uni('neoan')
+            ->hook('main', 'devTo')
+            ->output();
+    }
 
     /**
      * @var bool
@@ -23,10 +36,22 @@ class DevTo extends Neoan
     private $markdown = false;
     private $apiKey;
 
-    function getDevTo()
+    function getDevTo(array $body = [])
     {
-        $test = json_decode(file_get_contents(__DIR__ . '/test.json'), true);
-        $this->postDevTo($test);
+        $jwt = Stateless::restrict();
+        $answer = [];
+        if (isset($body['apiKey'])) {
+            // test
+            $this->apiKey = $body['apiKey'];
+            $header = $this->curlHeader();
+            $testAnswer = Curl::curling('https://dev.to/api/articles/me',[],$header, 'GET');
+            $credentials = getCredentials();
+            $token = $credentials['blua_devto']['salt'];
+            $encrypted = Ops::serialize(Ops::encrypt($body['apiKey'], $token));
+            $answer = ['token' => $encrypted, 'test' => $testAnswer];
+        }
+
+        return $answer;
     }
 
     /**
@@ -38,19 +63,15 @@ class DevTo extends Neoan
     function postDevTo(array $body)
     {
 
-        // $jwt = Stateless::restrict();
-        // token-insecurity in blua.blue -> send JWT or encrypt?
-
-
-        // get dev.to api key
         try {
             $credentials = getCredentials();
             // check token
-            if(!isset($_SERVER['HTTP_AUTHORIZATION']) || substr($_SERVER['HTTP_AUTHORIZATION'],7) !== $credentials['blua_devto']['token']){
+            if (!isset($_SERVER['HTTP_AUTHORIZATION'])) {
                 return ['webhook' => 'denied'];
             }
 
-            $this->apiKey = $this->getApiKey($credentials);
+            $this->apiKey = $this->getApiKey($credentials, substr($_SERVER['HTTP_AUTHORIZATION'], 7));
+
 
             switch ($body['event']) {
                 case 'created':
@@ -77,34 +98,41 @@ class DevTo extends Neoan
      */
     private function sendToDevTo($payload, $existingId)
     {
-        $header = [
-            'User-Agent: neoan3',
-            'Content-Type: application/json',
-            'api-key: ' . $this->apiKey
-        ];
+        $header = $this->curlHeader();
         $url = 'https://dev.to/api/articles' . ($existingId ? '/' . $existingId : '');
         $call = Curl::curling($url, json_encode(['article' => $payload]), $header, $existingId ? 'PUT' : 'POST');
         if (isset($call['id']) && !$existingId) {
             Db::ask('article_store', [
                 'article_id' => '$' . $payload['id'],
-                'store_key' => 'dev-to-id',
-                'value' => $call['id']
+                'store_key'  => 'dev-to-id',
+                'value'      => $call['id']
             ]);
+        } else {
+            file_put_contents(__DIR__ . '/error-' . date('Y_m_d-H_i_s') . '.json', json_encode($call));
         }
+    }
+    private function curlHeader(){
+        return [
+            'User-Agent: neoan3',
+            'Content-Type: application/json',
+            'api-key: ' . $this->apiKey
+        ];
     }
 
     /**
      * @param $credentials
      *
+     * @param $token
+     *
      * @return mixed
      * @throws \Exception
      */
-    private function getApiKey($credentials)
+    private function getApiKey($credentials, $token)
     {
-        if (!isset($credentials['blua_devto']['api_key'])) {
-            throw new \Exception('Key not set');
+        if (!isset($credentials['blua_devto']['salt'])) {
+            throw new \Exception('Salt not set');
         }
-        return $credentials['blua_devto']['api_key'];
+        return Ops::decrypt(Ops::deserialize($token), $credentials['blua_devto']['salt']);
     }
 
     /**
@@ -114,14 +142,14 @@ class DevTo extends Neoan
      */
     private function transformPayload($payload)
     {
-        $isLocal = strpos(base,'localhost') !== false;
+        $isLocal = strpos(base, 'localhost') !== false;
         $article = [
-            'title' => $payload['name'],
-            'tags' => explode(',', $payload['keywords']),
-            'description' => $payload['teaser'],
+            'title'         => $payload['name'],
+            'tags'          => explode(',', $payload['keywords']),
+            'description'   => $payload['teaser'],
             'body_markdown' => $this->prepareContent($payload['content'])
         ];
-        if(!$isLocal){
+        if (!$isLocal) {
             $article['canonical_url'] = base . 'article/' . $payload['slug'] . '/';
         }
         if (!empty($payload['publish_date'])) {
