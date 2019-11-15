@@ -38,16 +38,15 @@ class DevTo extends Neoan
 
     function getDevTo(array $body = [])
     {
-        $jwt = Stateless::restrict();
+        Stateless::restrict();
         $answer = [];
         if (isset($body['apiKey'])) {
-            // test
             $this->apiKey = $body['apiKey'];
             $header = $this->curlHeader();
             $testAnswer = Curl::curling('https://dev.to/api/articles/me',[],$header, 'GET');
             $credentials = getCredentials();
-            $token = $credentials['blua_devto']['salt'];
-            $encrypted = Ops::serialize(Ops::encrypt($body['apiKey'], $token));
+            $key = $credentials['blua_devto']['salt'];
+            $encrypted = Ops::serialize(Ops::encrypt($body['apiKey'], $key));
             $answer = ['token' => $encrypted, 'test' => $testAnswer];
         }
 
@@ -62,7 +61,7 @@ class DevTo extends Neoan
      */
     function postDevTo(array $body)
     {
-
+        $info = [];
         try {
             $credentials = getCredentials();
             // check token
@@ -79,7 +78,7 @@ class DevTo extends Neoan
                     // find existing
                     $update = $this->investigateStoreObject($body['payload']['store']);
                     $devBody = $this->transformPayload($body['payload']);
-                    $this->sendToDevTo($devBody, $update);
+                $info = $this->sendToDevTo($body['payload']['id'], $devBody, $update);
                     break;
                 case 'deleted':
                     break;
@@ -87,29 +86,31 @@ class DevTo extends Neoan
         } catch (\Exception $e) {
             throw new RouteException('Unable to execute dev.to plugin', 500);
         }
-        return ['webhook' => 'received'];
+        return ['webhook' => 'received', 'info' => $info];
     }
 
     /**
      * @param $payload
      * @param $existingId
      *
+     * @return array|mixed
      * @throws \Neoan3\Apps\DbException
      */
-    private function sendToDevTo($payload, $existingId)
+    private function sendToDevTo($articleId,$payload, $existingId)
     {
         $header = $this->curlHeader();
         $url = 'https://dev.to/api/articles' . ($existingId ? '/' . $existingId : '');
         $call = Curl::curling($url, json_encode(['article' => $payload]), $header, $existingId ? 'PUT' : 'POST');
         if (isset($call['id']) && !$existingId) {
             Db::ask('article_store', [
-                'article_id' => '$' . $payload['id'],
+                'article_id' => '$' . $articleId,
                 'store_key'  => 'dev-to-id',
-                'value'      => $call['id']
+                'value'      => '=' .$call['id']
             ]);
         } else {
             file_put_contents(__DIR__ . '/error-' . date('Y_m_d-H_i_s') . '.json', json_encode($call));
         }
+        return $call;
     }
     private function curlHeader(){
         return [
