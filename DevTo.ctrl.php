@@ -78,7 +78,7 @@ class DevTo extends Neoan
                     // find existing
                     $update = $this->investigateStoreObject($body['payload']['store']);
                     $devBody = $this->transformPayload($body['payload']);
-                $info = $this->sendToDevTo($devBody, $update);
+                $info = $this->sendToDevTo($body['payload']['id'], $devBody, $update);
                     break;
                 case 'deleted':
                     break;
@@ -96,16 +96,16 @@ class DevTo extends Neoan
      * @return array|mixed
      * @throws \Neoan3\Apps\DbException
      */
-    private function sendToDevTo($payload, $existingId)
+    private function sendToDevTo($articleId,$payload, $existingId)
     {
         $header = $this->curlHeader();
         $url = 'https://dev.to/api/articles' . ($existingId ? '/' . $existingId : '');
         $call = Curl::curling($url, json_encode(['article' => $payload]), $header, $existingId ? 'PUT' : 'POST');
         if (isset($call['id']) && !$existingId) {
             Db::ask('article_store', [
-                'article_id' => '$' . $payload['id'],
+                'article_id' => '$' . $articleId,
                 'store_key'  => 'dev-to-id',
-                'value'      => $call['id']
+                'value'      => '=' .$call['id']
             ]);
         } else {
             file_put_contents(__DIR__ . '/error-' . date('Y_m_d-H_i_s') . '.json', json_encode($call));
