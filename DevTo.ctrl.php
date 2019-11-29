@@ -184,10 +184,21 @@ class DevTo extends Neoan
      */
     private function convertContent($content)
     {
-        if (!$this->markdown) {
-            $this->markdown = new HtmlConverter(['strip_tags' => true]);
+        $answer = '';
+        switch($content['content_type']){
+            case 'markdown': $answer =  $content['content'];
+                break;
+            case 'html' :
+                if (!$this->markdown) {
+                    $this->markdown = new HtmlConverter(['strip_tags' => true]);
+                }
+                $answer = $this->markdown->convert($content['content']);
+                break;
+            case 'img' :
+                $answer = '!(' . $content['content'] . ')';
+                break;
         }
-        return $this->markdown->convert($content);
+        return $answer;
     }
 
     /**
