@@ -172,7 +172,7 @@ class DevTo extends Neoan
     {
         $content = '';
         foreach ($contentArray as $contentPart) {
-            $content .= $this->convertContent($contentPart['content']);
+            $content .= $this->convertContent($contentPart);
         }
         return $content;
     }
@@ -192,7 +192,12 @@ class DevTo extends Neoan
                 if (!$this->markdown) {
                     $this->markdown = new HtmlConverter(['strip_tags' => true]);
                 }
-                $answer = $this->markdown->convert($content['content']);
+                try{
+                    $answer = $this->markdown->convert($content['content']);
+                } catch (\Exception $e){
+                    $answer = '';
+                }
+
                 break;
             case 'img' :
                 $answer = '!(' . $content['content'] . ')';
